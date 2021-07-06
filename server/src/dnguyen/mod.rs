@@ -30,3 +30,22 @@ pub mod error {
     }
 }
 
+pub mod blog {
+
+    use chrono::prelude::*;
+    use std::fmt;
+
+    pub struct BlogPost {
+        created_at: DateTime<Utc>,
+        updated_at: Option<DateTime<Utc>>,
+        is_public: bool,
+        delta: String,
+        title: String
+    }
+
+    impl fmt::Display for BlogPost {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "\"{}\" (created {})", self.title, self.created_at)
+        }
+    }
+}
