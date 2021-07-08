@@ -1,11 +1,7 @@
 mod dnguyen;
 
 use rocket::{get, routes};
-
-use tokio;
-use tokio_postgres::{NoTls};
-
-use dnguyen::error::{DBError};
+use dnguyen::blog::{retrieve_first_post};
 
 #[get("/")]
 fn index() -> &'static str {
@@ -13,22 +9,11 @@ fn index() -> &'static str {
 }
 
 #[get("/db_test")]
-async fn db_test() -> Result<String, DBError> {
-    let (client, connection) = tokio_postgres::connect("host=localhost user=dytrich", NoTls).await?;
-
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            eprintln!("Connection error: {}", e);
-        }
-    });
-
-    let rows = client
-        .query("SELECT * FROM messages", &[])
-        .await?;
-
-    let value: String = rows[0].get(0);
-
-    return Ok(value);
+async fn db_test() -> Option<String> {
+    return match retrieve_first_post().await {
+        Ok(r) => Some(r.to_json().to_string()),
+        Err(_) => None,
+    };
 }
 
 #[rocket::main]
