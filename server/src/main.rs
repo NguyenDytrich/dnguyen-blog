@@ -1,26 +1,32 @@
 mod dnguyen;
 
 use rocket::{get, routes};
-use dnguyen::blog::{retrieve_first_post};
+use dnguyen::blog::{retrieve_recent_posts};
 
 #[get("/")]
 fn index() -> &'static str {
     "Hello, world!"
 }
 
-#[get("/db_test")]
-async fn db_test() -> Option<String> {
-    return match retrieve_first_post().await {
-        Ok(r) => Some(r.to_json().to_string()),
+/// Retreives the 10 most recent posts in JSON format
+#[get("/recent")]
+async fn recent_posts() -> Option<String> {
+    let post = match retrieve_recent_posts().await {
+        Ok(r) => match serde_json::to_string(&r) {
+            Ok(v) => Some(v),
+            Err(_) => None,
+        },
         Err(_) => None,
     };
+
+    return post;
 }
 
 #[rocket::main]
 async fn main() {
     let _server = rocket::build()
         .mount("/", routes![index])
-        .mount("/", routes![db_test])
+        .mount("/posts", routes![recent_posts])
         .launch()
         .await;
 }
