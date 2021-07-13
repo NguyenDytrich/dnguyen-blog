@@ -2,6 +2,7 @@ mod dnguyen;
 
 use rocket::{get, routes};
 use dnguyen::blog::{retrieve_recent_posts};
+use dotenv::dotenv;
 
 #[get("/")]
 fn index() -> &'static str {
@@ -24,6 +25,8 @@ async fn recent_posts() -> Option<String> {
 
 #[rocket::main]
 async fn main() {
+    dotenv().ok();
+
     let _server = rocket::build()
         .mount("/", routes![index])
         .mount("/posts", routes![recent_posts])

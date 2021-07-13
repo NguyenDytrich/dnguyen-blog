@@ -34,6 +34,7 @@ pub mod error {
 
 pub mod blog {
 
+    use std::env;
     use std::error;
     use std::vec::Vec;
 
@@ -58,7 +59,7 @@ pub mod blog {
 
     /// Retrieves the 10 most recent posts
     pub async fn retrieve_recent_posts() -> Result<Vec<BlogPost>, Box<dyn error::Error>> {
-        let (client, connection) = tokio_postgres::connect("host=localhost user=dytrich", NoTls).await?;
+        let (client, connection) = tokio_postgres::connect(&env::var("DB_URL")?, NoTls).await?;
         tokio::spawn(async move {
             if let Err(e) = connection.await {
                 eprintln!("Connection error: {}", e);
