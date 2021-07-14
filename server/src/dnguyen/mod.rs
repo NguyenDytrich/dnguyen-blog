@@ -66,12 +66,14 @@ pub mod blog {
             }
         });
 
+        // If there are no rows, this will be an empty Vec
         let rows = client
             .query("SELECT * FROM blog_posts ORDER BY created_at DESC LIMIT 10", &[])
             .await?;
 
         let mut result: Vec<BlogPost> = Vec::new();
 
+        // Cast into the BlogPost struct
         for row in rows.iter() {
             let post = BlogPost {
                 created_at: row.get::<&str, DateTime<Utc>>("created_at"),
