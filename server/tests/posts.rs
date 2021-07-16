@@ -9,7 +9,7 @@ async fn it_gets_recents() {
     let mut uuids = common::db::create_random_posts(20).await.unwrap();
 
     // Test will fail if result is not Ok(_)
-    let posts = posts::retrieve_recent().await.unwrap();
+    let posts = posts::retrieve_recent(10).await.unwrap();
 
     assert_eq!(posts.len(), 10);
 

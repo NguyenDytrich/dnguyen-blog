@@ -10,7 +10,7 @@ fn index() -> &'static str {
 /// Retreives the 10 most recent posts in JSON format
 #[get("/recent")]
 async fn recent_posts() -> Option<String> {
-    let post = match retrieve_recent().await {
+    let post = match retrieve_recent(10).await {
         Ok(r) => match serde_json::to_string(&r) {
             Ok(v) => Some(v),
             Err(_) => None,

@@ -56,8 +56,8 @@ pub mod posts {
         pub title: String
     }
 
-    /// Retrieves the 10 most recent posts
-    pub async fn retrieve_recent() -> Result<Vec<BlogPost>, Box<dyn error::Error>> {
+    /// Retrieves a number of recent posts
+    pub async fn retrieve_recent(num: i64) -> Result<Vec<BlogPost>, Box<dyn error::Error>> {
         let (client, connection) = tokio_postgres::connect(&env::var("DB_URL")?, NoTls).await?;
         tokio::spawn(async move {
             if let Err(e) = connection.await {
@@ -67,7 +67,7 @@ pub mod posts {
 
         // If there are no rows, this will be an empty Vec
         let rows = client
-            .query("SELECT * FROM blog_posts ORDER BY created_at DESC LIMIT 10", &[])
+            .query("SELECT * FROM blog_posts ORDER BY created_at DESC LIMIT $1::BIGINT", &[&num])
             .await?;
 
         let mut result: Vec<BlogPost> = Vec::new();
