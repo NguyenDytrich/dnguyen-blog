@@ -1,7 +1,5 @@
 pub mod error {
 
-    // Wrapper class for tokio_postgres
-
     use std::error::Error;
     use std::fmt;
 
@@ -10,6 +8,7 @@ pub mod error {
     use rocket::http::Status;
 
     #[derive(Debug)]
+    /// Wrapper class for tokio_postgres errors
     pub struct DBError;
 
     impl fmt::Display for DBError {
@@ -32,33 +31,33 @@ pub mod error {
     }
 }
 
-pub mod blog {
+pub mod posts {
 
     use std::env;
     use std::error;
     use std::vec::Vec;
 
     use chrono::prelude::*;
-
     use tokio;
     use tokio_postgres::{NoTls};
-
     use serde::{Deserialize, Serialize};
+    use uuid::Uuid;
 
 
     /// Representation of the BlogPost
     #[derive(Serialize, Deserialize)]
     pub struct BlogPost {
-        created_at: DateTime<Utc>,
-        updated_at: Option<DateTime<Utc>>,
-        published_at: Option<DateTime<Utc>>,
-        is_public: bool,
-        delta: Option<serde_json::Value>,
-        title: String
+        pub uuid: Uuid,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: Option<DateTime<Utc>>,
+        pub published_at: Option<DateTime<Utc>>,
+        pub is_public: bool,
+        pub delta: Option<serde_json::Value>,
+        pub title: String
     }
 
     /// Retrieves the 10 most recent posts
-    pub async fn retrieve_recent_posts() -> Result<Vec<BlogPost>, Box<dyn error::Error>> {
+    pub async fn retrieve_recent() -> Result<Vec<BlogPost>, Box<dyn error::Error>> {
         let (client, connection) = tokio_postgres::connect(&env::var("DB_URL")?, NoTls).await?;
         tokio::spawn(async move {
             if let Err(e) = connection.await {
@@ -76,6 +75,7 @@ pub mod blog {
         // Cast into the BlogPost struct
         for row in rows.iter() {
             let post = BlogPost {
+                uuid: row.get::<&str, Uuid>("id"),
                 created_at: row.get::<&str, DateTime<Utc>>("created_at"),
                 updated_at: row.get::<&str, Option<DateTime<Utc>>>("updated_at"),
                 published_at: row.get::<&str, Option<DateTime<Utc>>>("published_at"),
