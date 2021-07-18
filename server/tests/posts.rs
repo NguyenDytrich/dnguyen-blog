@@ -1,4 +1,5 @@
 use dnguyen_blog::posts;
+use uuid::Uuid;
 
 mod common;
 
@@ -28,7 +29,6 @@ async fn it_casts_row_to_blog_post() {
 
     use std::convert::TryFrom;
     use chrono::prelude::*;
-    use uuid::Uuid;
 
     common::db::reset("blog_posts").await.expect("Error resetting table: blog_posts");
     common::db::create_random_posts(10).await.unwrap();
@@ -43,4 +43,42 @@ async fn it_casts_row_to_blog_post() {
     assert_eq!(post.is_public, row.get::<&str, bool>("is_public"));
     assert_eq!(post.delta, row.get::<&str, Option<serde_json::Value>>("delta"));
     assert_eq!(post.title, row.get::<&str, String>("title"));
+}
+
+#[tokio::test]
+async fn it_doesnt_get_unpublished_posts() {
+
+    common::db::reset("blog_posts").await.expect("Error resetting table: blog_posts");
+
+    for _i in 0..10 {
+        common::db::create_unpublished_post().await.unwrap();
+    }
+    let uuid: Uuid = common::db::create_unpublished_post().await.unwrap();
+
+    let recents = posts::retrieve_recent(10).await.unwrap();
+    assert_eq!(recents.len(), 0);
+
+    let uuid_post = posts::retrieve_by_uuid(uuid).await;
+    assert!(uuid_post.is_err());
+}
+
+#[tokio::test]
+async fn it_creates_new_drafts() {
+    common::db::reset("blog_posts").await.expect("Error resetting table: blog_posts");
+
+    let delta = r#"
+        {
+            "ops": [
+                { "insert": "Hello world!" }
+            ]
+        }
+    "#;
+
+    let d: serde_json::Value = serde_json::from_str(delta).unwrap();
+    let t = String::from("Newly Created");
+
+    let post = posts::create_draft(&t, &Some(d)).await.unwrap();
+    let most_recent_post = common::db::get_first_post().await.unwrap();
+    assert_eq!(most_recent_post.get::<&str, Uuid>("id"), post.uuid);
+    assert_eq!(most_recent_post.get::<&str, bool>("is_public"), false);
 }

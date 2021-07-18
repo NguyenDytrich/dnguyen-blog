@@ -29,7 +29,6 @@ pub mod db {
     /// Create a post, then return its ID
     pub async fn create_random_post() -> Result<Uuid, Box<dyn error::Error>> {
         let client = spawn_connection(&env::var("DB_URL")?).await?;
-        //TODO change to env var
         let fake_title: String = Word().fake();
 
         let rows = client
@@ -39,6 +38,20 @@ pub mod db {
                 RETURNING id", &[&fake_title]).await?;
 
         return Ok(rows[0].get(0));
+    }
+
+    pub async fn create_unpublished_post() -> Result<Uuid, Box<dyn error::Error>> {
+        let client = spawn_connection(&env::var("DB_URL")?).await?;
+        let fake_title: String = Word().fake();
+
+        let rows = client
+            .query("
+                INSERT INTO blog_posts (published_at, is_public, title) 
+                VALUES (CURRENT_TIMESTAMP, FALSE, $1)
+                RETURNING id", &[&fake_title]).await?;
+
+        return Ok(rows[0].get(0));
+
     }
 
     /// Create multiple posts, returning a Vec<Uuid> of their uuids
