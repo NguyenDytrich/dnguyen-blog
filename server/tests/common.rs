@@ -3,9 +3,9 @@ pub mod db {
     use std::env;
     use std::error;
 
-    use tokio;
-    use tokio_postgres::{NoTls};
     use uuid::Uuid;
+
+    use dnguyen_blog::db::spawn_connection;
 
     use fake::{Fake};
     use fake::faker::lorem::en::Word;
@@ -14,18 +14,12 @@ pub mod db {
         // TODO: empty db
     }
 
+    /// Resets a table by name. WARNING: you can inject SQL with this function
     pub async fn reset(table_name: &str) -> Result<(), Box<dyn error::Error>> {
-        //TODO create a singleton connection pool?
-        //TODO change to env var
-        let (client, connection) = tokio_postgres::connect(&env::var("DB_URL")?, NoTls).await?;
-        tokio::spawn(async move {
-            if let Err(e) = connection.await {
-                eprintln!("Connection error: {}", e);
-            }
-        });
-
+        let client = spawn_connection(&env::var("DB_URL")?).await?;
+        let statement = format!("DELETE FROM {}", table_name);
         let rows = client
-            .execute("DELETE FROM blog_posts", &[]).await?;
+            .execute(&statement[..], &[]).await?;
         return Ok(());
     }
 
@@ -34,15 +28,8 @@ pub mod db {
 
     /// Create a post, then return its ID
     pub async fn create_random_post() -> Result<Uuid, Box<dyn error::Error>> {
-        //TODO create a singleton connection pool?
+        let client = spawn_connection(&env::var("DB_URL")?).await?;
         //TODO change to env var
-        let (client, connection) = tokio_postgres::connect(&env::var("DB_URL")?, NoTls).await?;
-        tokio::spawn(async move {
-            if let Err(e) = connection.await {
-                eprintln!("Connection error: {}", e);
-            }
-        });
-
         let fake_title: String = Word().fake();
 
         let rows = client
@@ -66,14 +53,7 @@ pub mod db {
     }
 
     pub async fn get_first_post() -> Result<tokio_postgres::Row, Box<dyn error::Error>> {
-        //TODO create a singleton connection pool?
-        //TODO change to env var
-        let (client, connection) = tokio_postgres::connect(&env::var("DB_URL")?, NoTls).await?;
-        tokio::spawn(async move {
-            if let Err(e) = connection.await {
-                eprintln!("Connection error: {}", e);
-            }
-        });
+        let client = spawn_connection(&env::var("DB_URL")?).await?;
         let row = client.query_one("SELECT * FROM blog_posts LIMIT 1", &[]).await?;
         return Ok(row);
     }

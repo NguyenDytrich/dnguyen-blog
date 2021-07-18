@@ -30,6 +30,7 @@ async fn it_casts_row_to_blog_post() {
     use chrono::prelude::*;
     use uuid::Uuid;
 
+    common::db::reset("blog_posts").await.expect("Error resetting table: blog_posts");
     common::db::create_random_posts(10).await.unwrap();
     
     let row = common::db::get_first_post().await.unwrap();
