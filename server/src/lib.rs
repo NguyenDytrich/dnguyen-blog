@@ -31,15 +31,32 @@ pub mod error {
     }
 }
 
+pub mod db {
+
+    use std::error::Error;
+    use tokio_postgres::NoTls;
+
+    /// Open a connection to Postgres on a new task
+    pub async fn spawn_connection(url: &str) -> Result<tokio_postgres::Client, Box<dyn Error>> {
+        let (client, connection) = tokio_postgres::connect(url, NoTls).await?;
+        tokio::spawn(async move {
+            if let Err(e) = connection.await {
+                eprintln!("Connection error: {}", e);
+            }
+        });
+        return Ok(client);
+    }
+}
+
 pub mod posts {
 
     use std::env;
     use std::error;
     use std::vec::Vec;
+    use std::convert::TryFrom;
 
     use chrono::prelude::*;
-    use tokio;
-    use tokio_postgres::{NoTls};
+    use tokio_postgres::row::Row;
     use serde::{Deserialize, Serialize};
     use uuid::Uuid;
 
@@ -56,24 +73,9 @@ pub mod posts {
         pub title: String
     }
 
-    /// Retrieves a number of recent posts
-    pub async fn retrieve_recent(num: i64) -> Result<Vec<BlogPost>, Box<dyn error::Error>> {
-        let (client, connection) = tokio_postgres::connect(&env::var("DB_URL")?, NoTls).await?;
-        tokio::spawn(async move {
-            if let Err(e) = connection.await {
-                eprintln!("Connection error: {}", e);
-            }
-        });
-
-        // If there are no rows, this will be an empty Vec
-        let rows = client
-            .query("SELECT * FROM blog_posts ORDER BY created_at DESC LIMIT $1::BIGINT", &[&num])
-            .await?;
-
-        let mut result: Vec<BlogPost> = Vec::new();
-
-        // Cast into the BlogPost struct
-        for row in rows.iter() {
+    impl TryFrom<&Row> for BlogPost {
+        type Error = &'static str;
+        fn try_from(row: &Row) -> Result<Self, Self::Error> {
             let post = BlogPost {
                 uuid: row.get::<&str, Uuid>("id"),
                 created_at: row.get::<&str, DateTime<Utc>>("created_at"),
@@ -83,10 +85,35 @@ pub mod posts {
                 delta: row.get::<&str, Option<serde_json::Value>>("delta"),
                 title: row.get("title")
             };
+            return Ok(post);
+        }
+    }
 
+    /// Retrieves a number of recent posts
+    pub async fn retrieve_recent(num: i64) -> Result<Vec<BlogPost>, Box<dyn error::Error>> {
+        let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
+        
+        // If there are no rows, this will be an empty Vec
+        let rows = client
+            .query("SELECT * FROM blog_posts ORDER BY created_at DESC LIMIT $1::BIGINT", &[&num])
+            .await?;
+
+        let mut result: Vec<BlogPost> = Vec::new();
+
+        // Cast into the BlogPost struct
+        for row in rows.iter() {
+            let post = BlogPost::try_from(row).unwrap();
             result.push(post);
         }
 
         return Ok(result);
+    }
+
+    /// Retrieve a specific post
+    pub async fn retrieve_by_uuid(uuid: Uuid) -> Result<BlogPost, Box<dyn error::Error>> {
+        let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
+        let row = client.query_one("SELECT * FROM blog_posts WHERE uuid=$1", &[&uuid]).await?;
+        let post = BlogPost::try_from(&row)?;
+        return Ok(post);
     }
 }

@@ -58,10 +58,23 @@ pub mod db {
     pub async fn create_random_posts(num: u32) -> Result<Vec<Uuid>, Box<dyn error::Error>> {
         let mut result: Vec<Uuid> = Vec::new();
 
-        for i in 0..num {
+        for _i in 0..num {
             result.push(create_random_post().await?);
         }
 
         return Ok(result);
+    }
+
+    pub async fn get_first_post() -> Result<tokio_postgres::Row, Box<dyn error::Error>> {
+        //TODO create a singleton connection pool?
+        //TODO change to env var
+        let (client, connection) = tokio_postgres::connect(&env::var("DB_URL")?, NoTls).await?;
+        tokio::spawn(async move {
+            if let Err(e) = connection.await {
+                eprintln!("Connection error: {}", e);
+            }
+        });
+        let row = client.query_one("SELECT * FROM blog_posts LIMIT 1", &[]).await?;
+        return Ok(row);
     }
 }
