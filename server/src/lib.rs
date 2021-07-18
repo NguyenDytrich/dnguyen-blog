@@ -95,7 +95,7 @@ pub mod posts {
         
         // If there are no rows, this will be an empty Vec
         let rows = client
-            .query("SELECT * FROM blog_posts ORDER BY created_at DESC LIMIT $1::BIGINT", &[&num])
+            .query("SELECT * FROM blog_posts WHERE is_public = TRUE ORDER BY created_at DESC LIMIT $1::BIGINT", &[&num])
             .await?;
 
         let mut result: Vec<BlogPost> = Vec::new();
@@ -112,8 +112,26 @@ pub mod posts {
     /// Retrieve a specific post
     pub async fn retrieve_by_uuid(uuid: Uuid) -> Result<BlogPost, Box<dyn error::Error>> {
         let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
-        let row = client.query_one("SELECT * FROM blog_posts WHERE uuid=$1", &[&uuid]).await?;
+        let row = client.query_one("SELECT * FROM blog_posts WHERE uuid=$1 AND is_public = TRUE", &[&uuid]).await?;
         let post = BlogPost::try_from(&row)?;
         return Ok(post);
+    }
+
+    /// Persist a BlogPost to the DB
+    pub async fn create_draft(title: &String, delta: &Option<serde_json::Value>) -> Result<BlogPost, Box<dyn error::Error>> {
+        let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
+        let row = client.query_one("INSERT INTO blog_posts (title, delta, is_public) VALUES ($1, $2, false) RETURNING *", &[&title, &delta]).await?;
+        let post = BlogPost::try_from(&row).unwrap();
+        return Ok(post);
+    }
+}
+
+pub mod http {
+    use serde::{Serialize, Deserialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct CreatePostArgs {
+        pub delta: Option<serde_json::Value>,
+        pub title: String,
     }
 }
