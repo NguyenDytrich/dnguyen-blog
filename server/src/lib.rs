@@ -61,6 +61,7 @@ pub mod posts {
     use uuid::Uuid;
 
 
+    // TODO break into struct compsition
     /// Representation of the BlogPost
     #[derive(Serialize, Deserialize)]
     pub struct BlogPost {
@@ -123,6 +124,69 @@ pub mod posts {
         let row = client.query_one("INSERT INTO blog_posts (title, delta, is_public) VALUES ($1, $2, false) RETURNING *", &[&title, &delta]).await?;
         let post = BlogPost::try_from(&row).unwrap();
         return Ok(post);
+    }
+}
+
+pub mod user {
+
+    use bcrypt::{BcryptError};
+    use chrono::prelude::*;
+    use std::{error, env};
+    use uuid::Uuid;
+
+
+    pub struct Credentials {
+        pub email: String,
+        // Plaintext password
+        pub password: String
+    }
+
+    
+
+    impl Credentials {
+        /// Convenience method for bcrypt::verify. Validates a user's credentials
+        /// against a hash.
+        pub fn verify(&self, hash: String) -> Result<bool, BcryptError>{
+            return bcrypt::verify(&self.password, &hash);
+        }
+    }
+
+    pub struct User {
+        pub credentials: Credentials,
+        pub created_at: DateTime<Utc>,
+        last_login: DateTime<Utc>
+    }
+
+    /// Insert a new user, returning their UUID
+    pub async fn create(creds: &Credentials) -> Result<Uuid, Box<dyn error::Error>> {
+        let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
+        // TODO: Validate email
+        let password_hash = bcrypt::hash(&creds.password, 10)?;
+        let row = client.query_one("
+            INSERT INTO users (email, password_hash)
+            VALUES ($1, $2)
+            RETURNING id
+        ", &[&creds.email, &password_hash]).await?;
+
+        return Ok(row.get(0));
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use crate::user::Credentials;
+
+        #[test]
+        fn it_verifies_hashes() {
+            let pwd = "supercalifragilisticexpialadocious";
+            let c = Credentials {
+                email: "bobert@bob.com".to_string(),
+                password: pwd.to_string()
+            };
+            let hash = bcrypt::hash(pwd, 10).expect("Error hashing password");
+            let result = c.verify(hash);
+            assert!(result.is_ok());
+            assert_eq!(result.ok(), Some(true));
+        }
     }
 }
 
