@@ -36,3 +36,19 @@ async fn it_hashes_passwords() {
     // 5) Cleanup
     common::db::reset("users").await.expect("Error resetting table: users");
 }
+
+#[tokio::test]
+async fn it_logs_in_users() {
+    // Reset DB
+    common::db::reset("users").await.expect("Error resetting table: users");
+    let client = spawn_connection(&env::var("DB_URL").unwrap()).await.unwrap();
+
+    // Login the user
+    let creds = Credentials { email: SafeEmail().fake(), password: Password(10..100).fake()};
+    let uuid: Uuid = user::create(&creds).await.unwrap();
+
+    let u = user::login(&creds).await.unwrap();
+
+    assert_eq!(uuid, u.id);
+    assert_eq!(creds.email, u.email);
+}

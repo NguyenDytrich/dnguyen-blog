@@ -152,9 +152,10 @@ pub mod user {
     }
 
     pub struct User {
-        pub credentials: Credentials,
+        pub id: Uuid,
+        pub email: String,
         pub created_at: DateTime<Utc>,
-        last_login: DateTime<Utc>
+        last_login: Option<DateTime<Utc>>
     }
 
     /// Insert a new user, returning their UUID
@@ -169,6 +170,35 @@ pub mod user {
         ", &[&creds.email, &password_hash]).await?;
 
         return Ok(row.get(0));
+    }
+
+    /// Validate credentials to login a user.
+    pub async fn login(creds: &Credentials) -> Result<User, Box<dyn error::Error>> {
+        // Open a DB connection
+        let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
+
+        // TODO: if this method throws an error, no user exists by that email, so return
+        // appropriate error
+        
+        // Retrieve exactly one user.
+        let rows = client.query_one("SELECT * FROM users WHERE email = $1", &[&creds.email]).await?;
+        
+        // Check the passwords
+        let hash = rows.get::<&str, String>("password_hash");
+        // TODO: return appropriate error
+        creds.verify(hash).expect("Email and password combination not found");
+
+        // Now, update the last login time
+        let last_login = Utc::now();
+        client.execute("UPDATE USERS SET last_login = $1 WHERE email = $2", &[&last_login, &creds.email]).await?;
+
+        // Everything's good; return the user object
+        return Ok(User {
+            id: rows.get::<&str, Uuid>("id"),
+            email: rows.get::<&str, String>("email"),
+            created_at: rows.get::<&str, DateTime<Utc>>("created_at"),
+            last_login: Some(last_login)
+        });
     }
 
     #[cfg(test)]
