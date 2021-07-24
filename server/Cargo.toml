@@ -15,7 +15,7 @@ path = "src/main.rs"
 
 [dependencies]
 dotenv = "0.15.0"
-rocket = { version="0.5.0-rc.1", features=["json"] }
+rocket = { version="0.5.0-rc.1", features=["json", "secrets"] }
 tokio-postgres = { version="0.7.2", features=["with-chrono-0_4", "with-serde_json-1", "with-uuid-0_8"] }
 tokio = { version="1.8.0", features=["macros"] }
 chrono = { version="0.4.19", features=["serde"] }
