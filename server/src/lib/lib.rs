@@ -1,3 +1,5 @@
+pub mod http;
+
 pub mod error {
 
     use std::error::Error;
@@ -137,14 +139,14 @@ pub mod user {
     use rocket::outcome::Outcome;
     use rocket::http::Status;
     use rocket::request::{self, FromRequest, Request};
+    use rocket::form::FromForm;
 
+    #[derive(FromForm)]
     pub struct Credentials {
         pub email: String,
         // Plaintext password
         pub password: String
     }
-
-    
 
     impl Credentials {
         /// Convenience method for bcrypt::verify. Validates a user's credentials
@@ -179,9 +181,13 @@ pub mod user {
                 // Read the private user_id cookie
                 .get_private("user_id")
                 // Parse the value of said cookie
-                .map(|cookie| Uuid::parse_str(cookie.value()))
-                // Get the nested Result
-                .unwrap();
+                .map(|cookie| Uuid::parse_str(cookie.value()));
+
+            // If there is no cookie, return 400 with Unauthorized error.
+            let cookie = match cookie {
+                Some(v) => v,
+                None => return Outcome::Failure((Status::BadRequest, UserError::Unauthorized))
+            };
 
             // Early return if the value couldn't be parsed as a UUID
             let uid: Uuid = match cookie {
@@ -272,15 +278,5 @@ pub mod user {
             assert!(result.is_ok());
             assert_eq!(result.ok(), Some(true));
         }
-    }
-}
-
-pub mod http {
-    use serde::{Serialize, Deserialize};
-
-    #[derive(Serialize, Deserialize)]
-    pub struct CreatePostArgs {
-        pub delta: Option<serde_json::Value>,
-        pub title: String,
     }
 }

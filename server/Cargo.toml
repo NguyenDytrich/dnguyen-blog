@@ -7,7 +7,7 @@ edition = "2018"
 
 [lib]
 name = "dnguyen_blog"
-path = "src/lib.rs"
+path = "src/lib/lib.rs"
 
 [[bin]]
 name = "dnguyen_blog"

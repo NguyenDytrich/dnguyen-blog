@@ -1,9 +1,13 @@
 use rocket::{get, post, routes};
 use rocket::serde::json::Json;
 use rocket::response::status;
+use rocket::form::Form;
+use rocket::http::{Cookie, CookieJar};
 
 use dnguyen_blog::posts;
-use dnguyen_blog::http::CreatePostArgs;
+use dnguyen_blog::user;
+use dnguyen_blog::user::{User, Credentials};
+use dnguyen_blog::http::dto::CreatePostArgs;
 use dotenv::dotenv;
 
 #[get("/")]
@@ -41,8 +45,20 @@ async fn recent_posts_count(count: i64) -> Option<String> {
 
 /// Create a new post with arguments from posted JSON
 #[post("/posts/draft", format = "json", data = "<post_args>")]
-async fn new_post(post_args: Json<CreatePostArgs>) -> status::Accepted<()> {
+async fn new_post(user: User, post_args: Json<CreatePostArgs>) -> status::Accepted<()> {
+    println!("user {} posted a draft.", user.id);
     posts::create_draft(&post_args.title, &post_args.delta).await.unwrap();
+    return status::Accepted(Some(()));
+}
+
+#[post("/login", data = "<credentials>")]
+async fn login(cookies: &CookieJar<'_>, credentials: Form<Credentials>) -> status::Accepted<()> {
+    // TODO return meaningful error
+    let user = user::login(&credentials).await.unwrap();
+
+    // Set a private cookie
+    // TODO this could be a session ID
+    cookies.add_private(Cookie::new("user_id", user.id.to_string()));
     return status::Accepted(Some(()));
 }
 
@@ -51,7 +67,7 @@ async fn main() {
     dotenv().ok();
 
     let _server = rocket::build()
-        .mount("/", routes![index, recent_posts, recent_posts_count, new_post])
+        .mount("/", routes![index, recent_posts, recent_posts_count, new_post, login])
         .launch()
         .await;
 }
