@@ -31,7 +31,7 @@ async fn it_hashes_passwords() {
     assert_ne!(creds.password, hash);
 
     // 4) Verify that the password matches the password_hash field when comparing using BCrypt
-    assert!(creds.verify(hash).unwrap());
+    assert!(creds.verify(&hash).unwrap());
     
     // 5) Cleanup
     common::db::reset("users").await.expect("Error resetting table: users");
@@ -51,6 +51,22 @@ async fn it_logs_in_users() {
 
     assert_eq!(uuid, u.id);
     assert_eq!(creds.email, u.email);
+}
+
+#[tokio::test]
+async fn it_doesnt_log_in_invalid_credentials() {
+    // Reset DB
+    common::db::reset("users").await.expect("Error resetting table: users");
+    let client = spawn_connection(&env::var("DB_URL").unwrap()).await.unwrap();
+
+    // Login the user
+    let mut creds = Credentials { email: SafeEmail().fake(), password: Password(10..100).fake()};
+    let uuid: Uuid = users::create(&creds).await.unwrap();
+
+    creds.password = Password(10..100).fake();
+    let u = users::login(&creds).await;
+
+    assert!(u.is_err());
 }
 
 #[tokio::test]

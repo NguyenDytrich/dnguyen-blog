@@ -32,11 +32,31 @@ impl std::fmt::Display for SignupError {
     }
 }
 
+#[derive(Debug)]
+pub struct LoginError {
+    description: String
+}
+impl LoginError {
+    fn new(d: &str) -> LoginError {
+        LoginError {
+            description: d.to_string()
+        }
+    }
+}
+impl error::Error for LoginError {
+    fn description(&self) -> &str { &self.description }
+}
+impl std::fmt::Display for LoginError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.description)
+    }
+}
+
 impl Credentials {
     /// Convenience method for bcrypt::verify. Validates a user's credentials
     /// against a hash.
-    pub fn verify(&self, hash: String) -> Result<bool, BcryptError>{
-        return bcrypt::verify(&self.password, &hash);
+    pub fn verify(&self, hash: &str) -> Result<bool, BcryptError>{
+        return bcrypt::verify(&self.password, hash);
     }
 }
 
@@ -130,8 +150,14 @@ pub async fn login(creds: &Credentials) -> Result<User, Box<dyn error::Error>> {
     
     // Check the passwords
     let hash = rows.get::<&str, String>("password_hash");
+
     // TODO: return appropriate error
-    creds.verify(hash).expect("Email and password combination not found");
+    let is_valid = creds.verify(&hash)?;
+
+    // TODO don't panic
+    if !is_valid {
+        return Err(LoginError::new("No user with the given email/password combination").into());
+    }
 
     // Now, update the last login time
     let last_login = Utc::now();
@@ -182,7 +208,7 @@ mod tests {
             password: pwd.to_string()
         };
         let hash = bcrypt::hash(pwd, 10).expect("Error hashing password");
-        let result = c.verify(hash);
+        let result = c.verify(&hash);
         assert!(result.is_ok());
         assert_eq!(result.ok(), Some(true));
     }

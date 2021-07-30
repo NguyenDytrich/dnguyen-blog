@@ -7,7 +7,7 @@ use rocket::http::{Cookie, CookieJar};
 use dnguyen_blog::model::posts;
 use dnguyen_blog::model::users;
 use dnguyen_blog::model::users::{User, Credentials};
-use dnguyen_blog::http::dto::CreatePostArgs;
+use dnguyen_blog::http::dto::{CreatePostArgs, SignupArgs};
 use dotenv::dotenv;
 
 #[get("/")]
@@ -62,12 +62,22 @@ async fn login(cookies: &CookieJar<'_>, credentials: Form<Credentials>) -> statu
     return status::Accepted(Some(()));
 }
 
+#[post("/signup", data = "<signup>")]
+async fn signup(signup: Form<SignupArgs>) -> status::Accepted<()> {
+    users::signup(
+        &signup.email, 
+        &signup.password, 
+        &signup.password_conf).await.unwrap();
+
+    return status::Accepted(Some(()));
+}
+
 #[rocket::main]
 async fn main() {
     dotenv().ok();
 
     let _server = rocket::build()
-        .mount("/", routes![index, recent_posts, recent_posts_count, new_post, login])
+        .mount("/", routes![index, recent_posts, recent_posts_count, new_post, login, signup])
         .launch()
         .await;
 }
