@@ -1,5 +1,5 @@
-use dnguyen_blog::user;
-use dnguyen_blog::user::{User, Credentials};
+use dnguyen_blog::model::users;
+use dnguyen_blog::model::users::{User, Credentials};
 use dnguyen_blog::db::spawn_connection;
 
 use std::env;
@@ -17,7 +17,7 @@ async fn it_hashes_passwords() {
 
     // 2) Call a user create method with credentials
     let creds = Credentials { email: SafeEmail().fake(), password: Password(10..100).fake()};
-    let uuid: Uuid = user::create(&creds).await.unwrap();
+    let uuid: Uuid = users::create(&creds).await.unwrap();
 
     // 3) Verify that the password_hash field in the SQL table is not equal to plaintext
     let client = spawn_connection(&env::var("DB_URL").unwrap()).await.unwrap();
@@ -45,9 +45,9 @@ async fn it_logs_in_users() {
 
     // Login the user
     let creds = Credentials { email: SafeEmail().fake(), password: Password(10..100).fake()};
-    let uuid: Uuid = user::create(&creds).await.unwrap();
+    let uuid: Uuid = users::create(&creds).await.unwrap();
 
-    let u = user::login(&creds).await.unwrap();
+    let u = users::login(&creds).await.unwrap();
 
     assert_eq!(uuid, u.id);
     assert_eq!(creds.email, u.email);

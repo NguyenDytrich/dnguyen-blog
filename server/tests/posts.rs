@@ -1,7 +1,8 @@
-use dnguyen_blog::posts;
+use dnguyen_blog::model::posts;
 use uuid::Uuid;
 
 mod common;
+// TODO put these in separate files so they don't interfere with each other.
 
 #[tokio::test]
 async fn it_gets_recents() {

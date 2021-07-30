@@ -4,9 +4,9 @@ use rocket::response::status;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
 
-use dnguyen_blog::posts;
-use dnguyen_blog::user;
-use dnguyen_blog::user::{User, Credentials};
+use dnguyen_blog::model::posts;
+use dnguyen_blog::model::users;
+use dnguyen_blog::model::users::{User, Credentials};
 use dnguyen_blog::http::dto::CreatePostArgs;
 use dotenv::dotenv;
 
@@ -54,7 +54,7 @@ async fn new_post(user: User, post_args: Json<CreatePostArgs>) -> status::Accept
 #[post("/login", data = "<credentials>")]
 async fn login(cookies: &CookieJar<'_>, credentials: Form<Credentials>) -> status::Accepted<()> {
     // TODO return meaningful error
-    let user = user::login(&credentials).await.unwrap();
+    let user = users::login(&credentials).await.unwrap();
 
     // Set a private cookie
     // TODO this could be a session ID
