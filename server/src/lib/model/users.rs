@@ -15,6 +15,23 @@ pub struct Credentials {
     pub password: String
 }
 
+// TODO meaningful errors
+#[derive(Debug)]
+pub struct SignupError;
+impl SignupError {
+    fn new() -> SignupError {
+        SignupError
+    }
+}
+impl error::Error for SignupError {
+    fn description(&self) -> &str { "Signup error" }
+}
+impl std::fmt::Display for SignupError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", "Signup error")
+    }
+}
+
 impl Credentials {
     /// Convenience method for bcrypt::verify. Validates a user's credentials
     /// against a hash.
@@ -126,6 +143,30 @@ pub async fn login(creds: &Credentials) -> Result<User, Box<dyn error::Error>> {
         email: rows.get::<&str, String>("email"),
         created_at: rows.get::<&str, DateTime<Utc>>("created_at"),
         last_login: Some(last_login)
+    });
+}
+
+pub async fn signup(email: &str, password: &str, password_conf: &str) -> Result<User, Box<dyn error::Error>> {
+    if password != password_conf {
+        // TODO meaningful errors
+        return Err(SignupError::new().into());
+    }
+    // TODO Additional validation here
+
+    let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
+    // TODO config hash cost
+    let hash = bcrypt::hash(password, 10)?;
+
+    let rows = client.query_one(
+        "INSERT INTO users (email, password_hash)
+        VALUES ($1, $2)
+        RETURNING id, email, created_at", &[&email, &hash]).await?;
+
+    return Ok(User {
+        id: rows.get::<&str, Uuid>("id"),
+        email: rows.get::<&str, String>("email"),
+        created_at: rows.get::<&str, DateTime<Utc>>("created_at"),
+        last_login: None
     });
 }
 

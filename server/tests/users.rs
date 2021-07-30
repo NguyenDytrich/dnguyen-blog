@@ -52,3 +52,27 @@ async fn it_logs_in_users() {
     assert_eq!(uuid, u.id);
     assert_eq!(creds.email, u.email);
 }
+
+#[tokio::test]
+async fn it_signs_up_users() {
+    // Reset DB
+    common::db::reset("users").await.expect("Error resetting table: users");
+    let client = spawn_connection(&env::var("DB_URL").unwrap()).await.unwrap();
+
+    let email: String = SafeEmail().fake();
+    let password: String  = Password(10..100).fake();
+    let password_conf: String = password.to_owned();
+
+    // Signup the user
+    let u = users::signup(&email, &password, &password_conf).await.unwrap();
+
+    // Email should be the same
+    assert_eq!(email, u.email);
+
+    // Now we should be able to login with the credentials
+    let creds = Credentials { email: email.clone(), password: password.clone() };
+    let l = users::login(&creds).await.unwrap(); 
+
+    assert_eq!(u.id, l.id);
+    assert_eq!(email, l.email);
+}
