@@ -8,6 +8,8 @@ use tokio_postgres::row::Row;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::http::dto::CreatePostArgs;
+
 // TODO break into struct compsition
 /// Representation of the BlogPost
 #[derive(Serialize, Deserialize)]
@@ -66,9 +68,17 @@ pub async fn retrieve_by_uuid(uuid: Uuid) -> Result<BlogPost, Box<dyn error::Err
 }
 
 /// Persist a BlogPost to the DB
-pub async fn create_draft(title: &String, delta: &Option<serde_json::Value>) -> Result<BlogPost, Box<dyn error::Error>> {
+pub async fn create(args: CreatePostArgs) -> Result<BlogPost, Box<dyn error::Error>> {
     let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
-    let row = client.query_one("INSERT INTO blog_posts (title, delta, is_public) VALUES ($1, $2, false) RETURNING *", &[&title, &delta]).await?;
+    let published = match args.is_public {
+        Some(v) => v,
+        None => false
+    };
+
+    let row = client.query_one("
+        INSERT INTO blog_posts (title, delta, is_public) 
+        VALUES ($1, $2, $3) RETURNING *", &[&args.title, &args.delta, &published]).await?;
+
     let post = BlogPost::try_from(&row).unwrap();
     return Ok(post);
 }

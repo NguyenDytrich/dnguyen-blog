@@ -1,4 +1,5 @@
 use dnguyen_blog::model::posts;
+use dnguyen_blog::http::dto::CreatePostArgs;
 use uuid::Uuid;
 
 mod common;
@@ -75,10 +76,13 @@ async fn it_creates_new_drafts() {
         }
     "#;
 
-    let d: serde_json::Value = serde_json::from_str(delta).unwrap();
-    let t = String::from("Newly Created");
-
-    let post = posts::create_draft(&t, &Some(d)).await.unwrap();
+    let args: CreatePostArgs = CreatePostArgs {
+        delta: serde_json::from_str(delta).unwrap(),
+        title: String::from("Newly Created"),
+        is_public: Some(false)
+    };
+    
+    let post = posts::create(args).await.unwrap();
     let most_recent_post = common::db::get_first_post().await.unwrap();
     assert_eq!(most_recent_post.get::<&str, Uuid>("id"), post.uuid);
     assert_eq!(most_recent_post.get::<&str, bool>("is_public"), false);
