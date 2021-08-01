@@ -1,54 +1,18 @@
 use rocket::{get, post, routes};
-use rocket::serde::json::Json;
 use rocket::response::status;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
 
-use dnguyen_blog::model::posts;
 use dnguyen_blog::model::users;
-use dnguyen_blog::model::users::{User, Credentials};
-use dnguyen_blog::http::dto::{CreatePostArgs, SignupArgs};
+use dnguyen_blog::model::users::Credentials;
+use dnguyen_blog::http::dto::SignupArgs;
 use dotenv::dotenv;
+
+mod routes;
 
 #[get("/")]
 fn index() -> &'static str {
     "Hello, world!"
-}
-
-/// By default, retrieve 10 most recent posts
-#[get("/posts")]
-async fn recent_posts() -> Option<String> {
-    let post = match posts::retrieve_recent(10).await {
-        Ok(r) => match serde_json::to_string(&r) {
-            Ok(v) => Some(v),
-            Err(_) => None,
-        },
-        Err(_) => None,
-    };
-
-    return post;
-}
-
-/// Retreives a number of recent posts in JSON format
-#[get("/posts?<count>")]
-async fn recent_posts_count(count: i64) -> Option<String> {
-    let post = match posts::retrieve_recent(count).await {
-        Ok(r) => match serde_json::to_string(&r) {
-            Ok(v) => Some(v),
-            Err(_) => None,
-        },
-        Err(_) => None,
-    };
-
-    return post;
-}
-
-/// Create a new post with arguments from posted JSON
-#[post("/posts/draft", format = "json", data = "<args>")]
-async fn new_post(user: User, args: Json<CreatePostArgs>) -> status::Accepted<()> {
-    println!("user {} posted a draft.", user.id);
-    posts::create(args.into_inner()).await.unwrap();
-    return status::Accepted(Some(()));
 }
 
 #[post("/login", data = "<credentials>")]
@@ -77,7 +41,12 @@ async fn main() {
     dotenv().ok();
 
     let _server = rocket::build()
-        .mount("/", routes![index, recent_posts, recent_posts_count, new_post, login, signup])
+        .mount("/api", routes![
+                routes::api::blog_posts::recent,
+                routes::api::blog_posts::recent_count,
+                routes::api::blog_posts::new
+            ])
+        .mount("/", routes![index, login, signup])
         .launch()
         .await;
 }

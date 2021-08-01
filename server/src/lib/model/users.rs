@@ -90,13 +90,13 @@ impl<'r> FromRequest<'r> for User {
         // If there is no cookie, return 400 with Unauthorized error.
         let cookie = match cookie {
             Some(v) => v,
-            None => return Outcome::Failure((Status::BadRequest, UserError::Unauthorized))
+            None => return Outcome::Failure((Status::Unauthorized, UserError::Unauthorized))
         };
 
         // Early return if the value couldn't be parsed as a UUID
         let uid: Uuid = match cookie {
             Ok(r) => r,
-            Err(_) => return Outcome::Failure((Status::BadRequest, UserError::Unauthorized))
+            Err(_) => return Outcome::Failure((Status::Unauthorized, UserError::Unauthorized))
         };
 
         // TODO Cache this value
@@ -104,7 +104,7 @@ impl<'r> FromRequest<'r> for User {
         let user = retrieve_by_uuid(&uid).await;
         match user {
             Ok(u) => Outcome::Success(u),
-            Err(_) => Outcome::Failure((Status::BadRequest, UserError::DoesNotExist)),
+            Err(_) => Outcome::Failure((Status::Unauthorized, UserError::DoesNotExist)),
         }
 
     }
