@@ -1,11 +1,17 @@
 use rocket::{get, routes};
+use rocket::fs::{FileServer, relative};
 use dotenv::dotenv;
+
+use rocket_dyn_templates::Template;
 
 mod routes;
 
 #[get("/")]
-fn index() -> &'static str {
-    "Hello, world!"
+fn index() -> Template {
+    Template::render("index", context! {
+        title: "Home",
+        parent: "layout"
+    })
 }
 
 
@@ -25,6 +31,8 @@ async fn main() {
                 routes::api::auth::signup,
             ])
         .mount("/", routes![index])
+        .mount("/static", FileServer::from(relative!("static")))
+        .attach(Template::fairing())
         .launch()
         .await;
 }

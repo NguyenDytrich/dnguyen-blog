@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP&family=STIX+Two+Text:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+html, body, p, h1, h2, h3, h4, h5, h6 {
+	padding: 0;
+	margin: 0;
+	font-family: 'STIX Two Text', serif;
+}
+
+/* Grid Layout */
+body {
+	display: grid;
+	grid-template-columns: 1em 20em auto 1em;
+	grid-template-rows: auto 10em;
+	height: 100vh;
+	width: 100vw;
+}
+.nav {
+	grid-column-start: 2;
+	grid-column-end: 2;
+}
+.content {
+	grid-column-start: 3;
+	grid-row-start: 1;
+}
+.footer {
+	grid-column-start: 2;
+	grid-column-end: -2;
+	grid-row-start: 2;
+}
+
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: 'Noto Sans JP', sans-serif;
+	-webkit-font-smoothing: auto;
+	-moz-osx-font-smoothing: auto;
+}
+
+h1 {
+	font-size: 3em;
+}
+
+.nav > li, ul {
+	margin: 0;
+	padding: 0;
+}
+
+.nav-btn {
+	transition: padding 0.5s;
+	cursor: pointer;
+}
+
+.nav-btn:hover {
+	padding-left: 2em;
+}
