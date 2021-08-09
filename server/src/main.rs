@@ -1,4 +1,4 @@
-use rocket::{get, routes};
+use rocket::{get, routes, catch, catchers};
 use rocket::fs::{FileServer, relative};
 use dotenv::dotenv;
 
@@ -8,8 +8,13 @@ mod routes;
 
 #[get("/")]
 fn index() -> Template {
-    Template::render("index", context! {
-        title: "Home",
+    Template::render("about", ())
+}
+
+#[catch(404)]
+fn not_found() -> Template {
+    Template::render("error/404", context! {
+        title: "404",
         parent: "layout"
     })
 }
@@ -32,6 +37,7 @@ async fn main() {
             ])
         .mount("/", routes![index])
         .mount("/static", FileServer::from(relative!("static")))
+        .register("/", catchers![not_found])
         .attach(Template::fairing())
         .launch()
         .await;
