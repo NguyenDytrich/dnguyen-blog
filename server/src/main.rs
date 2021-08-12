@@ -11,6 +11,35 @@ fn index() -> Template {
     Template::render("about", ())
 }
 
+#[get("/support")]
+fn support_me() -> Template {
+    Template::render("support", context! {
+        title: "Support Me",
+        parent: "layout"
+    })
+}
+
+#[get("/blog")]
+fn blog_index() -> Template {
+    Template::render("blog_index", context! {
+        title: "Blog",
+        parent: "layout",
+        blog_posts: [
+            context! {
+                title:  "Test post",
+                date: "09 August, 2021",
+                preview: "Lorem ipsum"
+            }
+        ],
+        paginate: context! {
+            prev: false,
+            next: true,
+            current: 1,
+            total: 10
+        }
+    })
+}
+
 #[catch(404)]
 fn not_found() -> Template {
     Template::render("error/404", context! {
@@ -35,7 +64,11 @@ async fn main() {
                 routes::api::auth::login,
                 routes::api::auth::signup,
             ])
-        .mount("/", routes![index])
+        .mount("/", routes![
+                index,
+                blog_index,
+                support_me
+            ])
         .mount("/static", FileServer::from(relative!("static")))
         .register("/", catchers![not_found])
         .attach(Template::fairing())
