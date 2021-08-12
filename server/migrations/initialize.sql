@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS blog_posts (
 	updated_at TIMESTAMP WITH TIME ZONE,
 	published_at TIMESTAMP WITH TIME ZONE,
 	is_public BOOLEAN DEFAULT false,
-	delta JSON,
+	markdown TEXT,
 	title VARCHAR(255) NOT NULL
 );
 

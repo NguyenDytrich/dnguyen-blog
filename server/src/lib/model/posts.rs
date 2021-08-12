@@ -19,7 +19,7 @@ pub struct BlogPost {
     pub updated_at: Option<DateTime<Utc>>,
     pub published_at: Option<DateTime<Utc>>,
     pub is_public: bool,
-    pub delta: Option<serde_json::Value>,
+    pub markdown: Option<String>,
     pub title: String
 }
 
@@ -32,7 +32,7 @@ impl TryFrom<&Row> for BlogPost {
             updated_at: row.get::<&str, Option<DateTime<Utc>>>("updated_at"),
             published_at: row.get::<&str, Option<DateTime<Utc>>>("published_at"),
             is_public: row.get("is_public"),
-            delta: row.get::<&str, Option<serde_json::Value>>("delta"),
+            markdown: row.get::<&str, Option<String>>("markdown"),
             title: row.get("title")
         };
         return Ok(post);
@@ -76,8 +76,8 @@ pub async fn create(args: CreatePostArgs) -> Result<BlogPost, Box<dyn error::Err
     };
 
     let row = client.query_one("
-        INSERT INTO blog_posts (title, delta, is_public) 
-        VALUES ($1, $2, $3) RETURNING *", &[&args.title, &args.delta, &published]).await?;
+        INSERT INTO blog_posts (title, markdown, is_public) 
+        VALUES ($1, $2, $3) RETURNING *", &[&args.title, &args.markdown, &published]).await?;
 
     let post = BlogPost::try_from(&row).unwrap();
     return Ok(post);

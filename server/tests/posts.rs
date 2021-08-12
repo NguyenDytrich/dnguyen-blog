@@ -43,7 +43,7 @@ async fn it_casts_row_to_blog_post() {
     assert_eq!(post.updated_at, row.get::<&str, Option<DateTime<Utc>>>("updated_at"));
     assert_eq!(post.published_at, row.get::<&str, Option<DateTime<Utc>>>("published_at"));
     assert_eq!(post.is_public, row.get::<&str, bool>("is_public"));
-    assert_eq!(post.delta, row.get::<&str, Option<serde_json::Value>>("delta"));
+    assert_eq!(post.markdown, row.get::<&str, Option<String>>("markdown"));
     assert_eq!(post.title, row.get::<&str, String>("title"));
 }
 
@@ -68,16 +68,12 @@ async fn it_doesnt_get_unpublished_posts() {
 async fn it_creates_new_drafts() {
     common::db::reset("blog_posts").await.expect("Error resetting table: blog_posts");
 
-    let delta = r#"
-        {
-            "ops": [
-                { "insert": "Hello world!" }
-            ]
-        }
+    let md = r#"
+        Hello world!
     "#;
 
     let args: CreatePostArgs = CreatePostArgs {
-        delta: serde_json::from_str(delta).unwrap(),
+        markdown: Some(md.to_string()),
         title: String::from("Newly Created"),
         is_public: Some(false)
     };
