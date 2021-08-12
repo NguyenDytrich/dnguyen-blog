@@ -24,6 +24,8 @@ serde = "1.0.126"
 serde_json = "1.0.64"
 uuid = { version="0.8", features=["serde", "v4"] }
 bcrypt = "0.10.1"
+pulldown-cmark = "0.8.0"
+ammonia = "3"
 
 [dev-dependencies]
 fake = { version = "2.4", features=["chrono"] }
