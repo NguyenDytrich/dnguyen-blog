@@ -1,8 +1,11 @@
 use rocket::{get, routes, catch, catchers};
 use rocket::fs::{FileServer, relative};
+use rocket_dyn_templates::Template;
+
+use dnguyen_blog::model::posts::{BlogPost, retrieve_by_uuid};
+use uuid::Uuid;
 use dotenv::dotenv;
 
-use rocket_dyn_templates::Template;
 
 mod routes;
 
@@ -41,12 +44,28 @@ fn blog_index() -> Template {
 }
 
 #[get("/blog/<post_id>")]
-fn blog_post(post_id: String) -> Template {
-    Template::render("blog/post", context! {
-        title: "Test Post",
-        parent: "layout",
-        content: "<p>Lorem Ipsum</p>"
-    })
+async fn blog_post(post_id: String) -> Template {
+    let u = Uuid::parse_str(&post_id);
+    let post: Option<BlogPost>  = match u {
+        Ok(uuid) => retrieve_by_uuid(uuid)
+                        .await
+                        .map_or(None, |v| Some(v)),
+        Err(_) => None
+    };
+
+    return match post {
+        Some(v) => Template::render(
+            "blog/post", context! {
+                title: v.title,
+                parent: "layout",
+                content: "<p>Lorem Ipsum</p>"
+            }),
+        None => Template::render(
+            "error/404", context! {
+                title: "404",
+                parent: "layout"
+            })
+    }
 }
 
 #[catch(404)]

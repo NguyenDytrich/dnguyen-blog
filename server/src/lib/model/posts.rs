@@ -62,7 +62,7 @@ pub async fn retrieve_recent(num: i64) -> Result<Vec<BlogPost>, Box<dyn error::E
 /// Retrieve a specific post
 pub async fn retrieve_by_uuid(uuid: Uuid) -> Result<BlogPost, Box<dyn error::Error>> {
     let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
-    let row = client.query_one("SELECT * FROM blog_posts WHERE uuid=$1 AND is_public = TRUE", &[&uuid]).await?;
+    let row = client.query_one("SELECT * FROM blog_posts WHERE id=$1 AND is_public = TRUE", &[&uuid]).await?;
     let post = BlogPost::try_from(&row)?;
     return Ok(post);
 }
