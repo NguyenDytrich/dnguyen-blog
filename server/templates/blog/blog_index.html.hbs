@@ -1,0 +1,36 @@
+{{#*inline "page"}}
+<div>
+	<ul class="p-0">
+	{{#each blog_posts}}
+	<li>
+		<div>
+			<div class="blog-heading">
+				<h2><a href="#">{{title}}</a></h2>
+				<div class="date">{{date}}</div>
+			</div>
+			<div class="blog-preview">
+				<div>
+					{{{preview}}}
+				</div>
+			</div>
+			<div class="blog-continue">
+				<a href="#">Continue</a>
+			</div>
+		</div>
+	</li>
+	{{/each}}
+	</ul>
+</div>
+<div class="text-center">
+	{{#with paginate}}
+		{{#if prev}}
+		<a href="#">prev</a>
+		{{/if}}
+		{{current}} of {{total}}
+		{{#if next}}
+		<a href="#">next</a>
+		{{/if}}
+	{{/with}}
+</div>
+{{/inline}}
+{{~> (parent)~}}

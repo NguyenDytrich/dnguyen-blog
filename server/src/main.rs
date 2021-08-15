@@ -21,7 +21,7 @@ fn support_me() -> Template {
 
 #[get("/blog")]
 fn blog_index() -> Template {
-    Template::render("blog_index", context! {
+    Template::render("blog/blog_index", context! {
         title: "Blog",
         parent: "layout",
         blog_posts: [
@@ -37,6 +37,15 @@ fn blog_index() -> Template {
             current: 1,
             total: 10
         }
+    })
+}
+
+#[get("/blog/<post_id>")]
+fn blog_post(post_id: String) -> Template {
+    Template::render("blog/post", context! {
+        title: "Test Post",
+        parent: "layout",
+        content: "<p>Lorem Ipsum</p>"
     })
 }
 
@@ -67,6 +76,7 @@ async fn main() {
         .mount("/", routes![
                 index,
                 blog_index,
+                blog_post,
                 support_me
             ])
         .mount("/static", FileServer::from(relative!("static")))

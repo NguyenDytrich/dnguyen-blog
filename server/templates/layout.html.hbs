@@ -2,17 +2,17 @@
 <html>
 	<head>
 		<title>Dytrich Nguyen - {{ title }}</title>
-		<link rel="stylesheet" href="static/main.css">
+		<link rel="stylesheet" href="http://localhost:8000/static/main.css">
 	</head>
 	<body>
-		<div id="nav" class="nav text-center my-1">
-			{{~> nav}}
+		<div id="main">
+			<div id="nav" class="nav text-center my-1">
+				{{~> nav}}
+			</div>
+			<div id="content" class="content">
+				{{~> page}}
+			</div>
 		</div>
-		<div id="content">
-			{{~> page}}
-		</div>
-		<div id="footer" class="footer">
-			{{> footer}}
-		</div>
+		{{> footer}}
 	</body>
 </html>

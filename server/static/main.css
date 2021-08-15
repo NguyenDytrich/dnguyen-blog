@@ -14,6 +14,10 @@ a {
 
 /* Layout */
 body {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: column;
+	height: 100vh;
 }
 
 .content-full {
@@ -68,9 +72,10 @@ body {
 	margin-right: 1em;
 }
 
-.footer {
-	flex: 1;
+footer {
+	padding-bottom: 0.5em;
 }
+
 /* End Layout */
 
 
@@ -90,10 +95,6 @@ h1 {
 
 h2 {
 	font-size: 1.75em;
-}
-
-footer p {
-	font-family: 'Noto Sans JP', sans-serif;
 }
 
 .banner {
@@ -122,6 +123,11 @@ footer p {
 /* Utility */
 .text-center {
 	text-align: center;
+}
+
+.mx-2 {
+	margin-left: 2em;
+	margin-right: 2em;
 }
 
 .my-1 {
