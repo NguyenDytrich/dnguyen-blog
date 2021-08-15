@@ -73,9 +73,19 @@ body {
 }
 
 footer {
-	padding-bottom: 0.5em;
+	font-size: 0.9em;
+	display: flex;
+	justify-content: space-between;
+	padding-bottom: 1em;
 }
 
+footer a {
+	color: black;
+}
+
+footer a:visited {
+	color: black;
+}
 /* End Layout */
 
 
@@ -208,18 +218,16 @@ h2 {
 	padding-right: 2em;
 }
 
-.version-info {
+#version-info {
+	position: relative;
 	display: flex;
 	justify-content: right;
 	gap: 1em;
 	letter-spacing: 0.05em;
-	opacity: 0.8;
 }
 
-.version-info a {
-	color: black;
-}
-
-.version-info a:visited {
-	color: black;
+#version-info > span {
+	position: absolute;
+	bottom: 0;
+	white-space: pre;
 }
