@@ -68,6 +68,15 @@ pub mod htmlify {
         clean(&*out)
     }
 
+    pub fn monthify(num: usize) -> Option<String> {
+        let a = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        if num > a.len() {
+            None
+        } else {
+            Some(a[num - 1].to_string())
+        }
+    }
+
     #[cfg(test)]
     mod tests {
         use super::*;
@@ -79,6 +88,19 @@ pub mod htmlify {
             let expected = "<p>Hello world, <a href=\"http://www.google.com/\" rel=\"noopener noreferrer\">this is</a> <del>a</del> <em>an</em> example.</p>\n";
 
             assert_eq!(expected, &result);
+        }
+
+        #[test]
+        fn it_gets_a_month() {
+            let a = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            for n in 1..=12 {
+                assert_eq!(Some(a[n-1].to_string()), monthify(n));
+            }
+        }
+
+        #[test]
+        fn it_doesnt_get_month_out_of_bounds() {
+            assert_eq!(None, monthify(13));
         }
     }
 }

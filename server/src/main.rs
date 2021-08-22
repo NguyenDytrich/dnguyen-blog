@@ -3,9 +3,10 @@ use rocket::fs::{FileServer, relative};
 use rocket_dyn_templates::Template;
 
 use dnguyen_blog::model::posts::{BlogPost, retrieve_by_uuid, retrieve_recent};
-use dnguyen_blog::htmlify::transcribe;
+use dnguyen_blog::htmlify::{transcribe, monthify};
 use dnguyen_blog::http::dto::BlogPostPreview;
 use std::vec;
+use chrono::prelude::*;
 use uuid::Uuid;
 use dotenv::dotenv;
 
@@ -34,10 +35,17 @@ async fn blog_index() -> Template {
 
     let mut mapped_posts: Vec<BlogPostPreview> = Vec::new();
     for p in posts.iter() {
+        let date = match p.published_at {
+            Some(d) => (d.day(), d.month(), d.year()),
+            None => (p.created_at.day(), p.created_at.month(), p.created_at.year())
+        };
         let preview = BlogPostPreview {
             uuid_repr: p.uuid.to_string(),
             title: p.title.to_owned(),
-            date_repr: "01, January, 1999".to_string(),
+            date_repr: format!("{:02}, {} {}", 
+                date.0, 
+                monthify(date.1 as usize).unwrap_or("ERR".to_string()),
+                date.2),
             preview: p.markdown
                 .to_owned()
                 .unwrap_or(String::new())
