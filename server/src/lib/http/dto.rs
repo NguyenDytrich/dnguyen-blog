@@ -21,3 +21,11 @@ pub struct SignupArgs {
     pub password: String,
     pub password_conf: String
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct BlogPostPreview {
+    pub uuid_repr: String,
+    pub title: String,
+    pub date_repr: String,
+    pub preview: String
+}

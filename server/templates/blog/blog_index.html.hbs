@@ -5,8 +5,8 @@
 	<li>
 		<div>
 			<div class="blog-heading">
-				<h2><a href="#">{{title}}</a></h2>
-				<div class="date">{{date}}</div>
+				<h2><a href="/blog/{{uuid_repr}}">{{title}}</a></h2>
+				<div class="date">{{date_repr}}</div>
 			</div>
 			<div class="blog-preview">
 				<div>
@@ -14,7 +14,7 @@
 				</div>
 			</div>
 			<div class="blog-continue">
-				<a href="#">Continue</a>
+				<a href="/blog/{{uuid_repr}}">Continue</a>
 			</div>
 		</div>
 	</li>

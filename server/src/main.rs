@@ -2,8 +2,10 @@ use rocket::{get, routes, catch, catchers};
 use rocket::fs::{FileServer, relative};
 use rocket_dyn_templates::Template;
 
-use dnguyen_blog::model::posts::{BlogPost, retrieve_by_uuid};
+use dnguyen_blog::model::posts::{BlogPost, retrieve_by_uuid, retrieve_recent};
 use dnguyen_blog::htmlify::transcribe;
+use dnguyen_blog::http::dto::BlogPostPreview;
+use std::vec;
 use uuid::Uuid;
 use dotenv::dotenv;
 
@@ -24,17 +26,29 @@ fn support_me() -> Template {
 }
 
 #[get("/blog")]
-fn blog_index() -> Template {
+async fn blog_index() -> Template {
+    // Retrieve posts or return empty vector
+    let posts: Vec<BlogPost> = retrieve_recent(5)
+        .await
+        .unwrap_or(Vec::new());
+
+    let mut mapped_posts: Vec<BlogPostPreview> = Vec::new();
+    for p in posts.iter() {
+        let preview = BlogPostPreview {
+            uuid_repr: p.uuid.to_string(),
+            title: p.title.to_owned(),
+            date_repr: "01, January, 1999".to_string(),
+            preview: p.markdown
+                .to_owned()
+                .unwrap_or(String::new())
+        };
+        mapped_posts.insert(0, preview);
+    }
+
     Template::render("blog/blog_index", context! {
         title: "Blog",
         parent: "layout",
-        blog_posts: [
-            context! {
-                title:  "Test post",
-                date: "09 August, 2021",
-                preview: "Lorem ipsum"
-            }
-        ],
+        blog_posts: mapped_posts,
         paginate: context! {
             prev: false,
             next: true,
