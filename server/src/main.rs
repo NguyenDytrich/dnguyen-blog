@@ -3,6 +3,7 @@ use rocket::fs::{FileServer, relative};
 use rocket_dyn_templates::Template;
 
 use dnguyen_blog::model::posts::{BlogPost, retrieve_by_uuid};
+use dnguyen_blog::htmlify::transcribe;
 use uuid::Uuid;
 use dotenv::dotenv;
 
@@ -58,7 +59,10 @@ async fn blog_post(post_id: String) -> Template {
             "blog/post", context! {
                 title: v.title,
                 parent: "layout",
-                content: "<p>Lorem Ipsum</p>"
+                content: transcribe(
+                    // Parse the markdown to HTML
+                    &v.markdown.unwrap_or(String::new())
+                )
             }),
         None => Template::render(
             "error/404", context! {
