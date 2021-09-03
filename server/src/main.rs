@@ -102,8 +102,6 @@ fn not_found() -> Template {
     })
 }
 
-
-
 #[rocket::main]
 async fn main() {
     dotenv().ok();

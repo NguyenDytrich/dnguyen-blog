@@ -41,22 +41,29 @@ impl TryFrom<&Row> for BlogPost {
 
 /// Retrieves a number of recent posts
 pub async fn retrieve_recent(num: i64) -> Result<Vec<BlogPost>, Box<dyn error::Error>> {
-    let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
-    
-    // If there are no rows, this will be an empty Vec
-    let rows = client
-        .query("SELECT * FROM blog_posts WHERE is_public = TRUE ORDER BY created_at DESC LIMIT $1::BIGINT", &[&num])
+    retrieve_with_offset(num, 0).await
+} 
+
+/// Retrieves a number of posts, in descending order by date, offset by a number of posts
+pub async fn retrieve_with_offset(num: i64, offset: i64) -> Result<Vec<BlogPost>, Box<dyn error::Error>> {
+    let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?; let rows = client
+        .query("
+            SELECT * FROM
+            blog_posts WHERE
+            is_public = TRUE
+            ORDER BY created_at DESC
+            LIMIT $1::BIGINT OFFSET $2::BIGINT
+        ", &[&num, &offset])
         .await?;
 
     let mut result: Vec<BlogPost> = Vec::new();
 
-    // Cast into the BlogPost struct
     for row in rows.iter() {
         let post = BlogPost::try_from(row).unwrap();
         result.push(post);
     }
 
-    return Ok(result);
+    Ok(result)
 }
 
 /// Retrieve a specific post

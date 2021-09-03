@@ -27,6 +27,32 @@ async fn it_gets_recents() {
 }
 
 #[tokio::test]
+async fn it_gets_recents_with_offset() {
+    common::db::reset("blog_posts").await.expect("Error resetting table: blog_posts");
+    // Panic if we can't generate test data
+    let mut uuids = common::db::create_random_posts(20).await.unwrap();
+
+    // Pop the first 10 since we don't care about them
+    for _i in 1..=10 {
+        uuids.pop();
+    }
+
+    // Test will fail if result is not Ok(_)
+    let posts = posts::retrieve_with_offset(10, 10).await.unwrap();
+
+    assert_eq!(posts.len(), 10);
+
+    // Posts should appear in reverse chronological order.
+    // Since new UUIDs are pushed into a vector, the last
+    // element of `uuids` should be equal to the first
+    // element of posts.
+    
+    for post in posts.iter() {
+        assert_eq!(post.uuid, uuids.pop().unwrap());
+    }
+}
+
+#[tokio::test]
 async fn it_casts_row_to_blog_post() {
 
     use std::convert::TryFrom;
