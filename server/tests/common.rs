@@ -7,8 +7,8 @@ pub mod db {
 
     use dnguyen_blog::db::spawn_connection;
 
-    use fake::{Fake};
-    use fake::faker::lorem::en::Word;
+    use fake::Fake;
+    use fake::faker::lorem::en::{Paragraphs, Word};
 
     pub fn setup() {
         // TODO: empty db
@@ -30,12 +30,13 @@ pub mod db {
     pub async fn create_random_post() -> Result<Uuid, Box<dyn error::Error>> {
         let client = spawn_connection(&env::var("DB_URL")?).await?;
         let fake_title: String = Word().fake();
+        let fake_body: String = Paragraphs(5..10).fake::<Vec<String>>().join("\n\n");
 
         let rows = client
             .query("
-                INSERT INTO blog_posts (published_at, is_public, title) 
-                VALUES (CURRENT_TIMESTAMP, TRUE, $1)
-                RETURNING id", &[&fake_title]).await?;
+                INSERT INTO blog_posts (published_at, is_public, title, markdown) 
+                VALUES (CURRENT_TIMESTAMP, TRUE, $1, $2)
+                RETURNING id", &[&fake_title, &fake_body]).await?;
 
         return Ok(rows[0].get(0));
     }
