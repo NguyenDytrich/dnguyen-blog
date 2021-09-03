@@ -1,5 +1,3 @@
-pub mod api;
-
 /// SergioBenitez macro for ad hoc contexts
 #[macro_export]
 macro_rules! context {
@@ -37,3 +35,6 @@ macro_rules! context {
         }
     }};
 }
+
+pub mod api;
+pub mod blog;
