@@ -21,18 +21,25 @@ async fn aggregate_blog_posts(count: i64, offset: i64) -> Vec<BlogPostPreview> {
             Some(d) => (d.day(), d.month(), d.year()),
             None => (p.created_at.day(), p.created_at.month(), p.created_at.year())
         };
-        let preview = BlogPostPreview {
+        let markdown = p.markdown.to_owned().unwrap_or(String::new());
+        let mut preview = String::new();
+        if markdown.len() > 300 {
+            preview.push_str(&markdown[1..=255]);
+            preview.push_str("...");
+        } else {
+            preview = markdown;
+        }
+
+        let post = BlogPostPreview {
             uuid_repr: p.uuid.to_string(),
             title: p.title.to_owned(),
             date_repr: format!("{:02}, {} {}", 
                 date.0, 
                 monthify(date.1 as usize).unwrap_or("ERR".to_string()),
                 date.2),
-            preview: p.markdown
-                .to_owned()
-                .unwrap_or(String::new())
+            preview: preview
         };
-        mapped_posts.insert(0, preview);
+        mapped_posts.insert(0, post);
     }
 
     return mapped_posts;

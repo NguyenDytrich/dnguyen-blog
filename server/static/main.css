@@ -41,6 +41,10 @@ body {
 	margin: 0;
 }
 
+.content p {
+	margin-top: 1em;
+}
+
 .blog-heading {
 	display: flex;
 	justify-content: space-between;
