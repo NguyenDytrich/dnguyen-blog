@@ -53,6 +53,15 @@ async fn it_gets_recents_with_offset() {
 }
 
 #[tokio::test]
+async fn it_gets_count() {
+    common::db::reset("blog_posts").await.expect("Error resetting table: blog_posts");
+    // Panic if we can't generate test data
+    let uuids = common::db::create_random_posts(20).await.unwrap();
+    let count = posts::get_post_count().await.unwrap();
+    assert_eq!(uuids.len(), count);
+}
+
+#[tokio::test]
 async fn it_casts_row_to_blog_post() {
 
     use std::convert::TryFrom;

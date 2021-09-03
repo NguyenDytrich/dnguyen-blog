@@ -74,6 +74,13 @@ pub async fn retrieve_by_uuid(uuid: Uuid) -> Result<BlogPost, Box<dyn error::Err
     return Ok(post);
 }
 
+pub async fn get_post_count() -> Result<usize, Box<dyn error::Error>> {
+    let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
+    let row = client.query_one("SELECT COUNT(*) FROM blog_posts WHERE is_public = TRUE", &[]).await?;
+    let count: i64 = row.get(0);
+    Ok(count as usize)
+}
+
 /// Persist a BlogPost to the DB
 pub async fn create(args: CreatePostArgs) -> Result<BlogPost, Box<dyn error::Error>> {
     let client = crate::db::spawn_connection(&env::var("DB_URL")?).await?;
