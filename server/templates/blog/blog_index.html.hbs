@@ -24,11 +24,11 @@
 <div class="text-center">
 	{{#with paginate}}
 		{{#if prev}}
-		<a href="#">prev</a>
+		<a href="/blog?page={{prev_page}}">prev</a>
 		{{/if}}
 		{{current}} of {{total}}
 		{{#if next}}
-		<a href="#">next</a>
+		<a href="/blog?page={{next_page}}">next</a>
 		{{/if}}
 	{{/with}}
 </div>
